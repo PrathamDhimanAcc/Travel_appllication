@@ -1,0 +1,5 @@
+CLASS zbp_booksuppl_str_m DEFINITION PUBLIC ABSTRACT FINAL FOR BEHAVIOR OF zi_travel_str_m.
+ENDCLASS.
+
+CLASS zbp_booksuppl_str_m IMPLEMENTATION.
+ENDCLASS.
