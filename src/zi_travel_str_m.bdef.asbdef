@@ -1,13 +1,17 @@
 managed implementation in class zcl_bp_travel_str_m unique;// implementation in class zbp_i_travel_str_m unique;
 strict ( 2 );
+with draft;
 
 define behavior for ZI_TRAVEL_STR_M //alias <alias_name>
 implementation in class zcl_bp_travel_str_m unique
 persistent table ztravel_str_m
+authorization master (instance)
+draft table ZTRAVEL_STR_D_M
 with additional save
 lock master
-authorization master ( instance )
+total etag LastChangedAt
 etag master LastChangedAt
+
 early numbering
 {
   field ( readonly ) TravelId, LastChangedBy, LastChangedAt, CreatedAt, CreatedBy;
@@ -32,6 +36,15 @@ early numbering
   delete;
   //  field ( readonly ) TravelId;
   association _Booking { create ( features : instance ); }
+  // REQUIRED: 3 regular draft actions
+  draft action Activate optimized;
+  draft action Resume;
+  draft action Edit;
+  draft action Discard;
+
+  // REQUIRED: 3 determine actions (fixes your error)
+  draft determine action Prepare;
+
   mapping for ztravel_str_m
     {
       TravelId      = travel_id;
@@ -57,6 +70,7 @@ early numbering
 define behavior for ZI_BOOKING_STR_M //alias <alias_name>
 implementation in class zbp_booking_str_m unique
 persistent table zbooking_str_m
+draft table zbooking_str_d_m
 lock dependent by _Travel
 authorization dependent by _Travel
 etag master LastChangedAt
@@ -67,6 +81,9 @@ early numbering
   field ( readonly ) TravelId, BookingId, LastChangedAt;
   field ( mandatory ) CarrierId, ConnectionId, FlightDate, BookingStatus;
   field ( mandatory : create, readonly : update ) BookingDate, CustomerId;
+
+
+  determination setCurrencyCode on save {  field CurrencyCode; }
 
   determination calculateTotalPrice on modify { create; field FlightPrice, CurrencyCode; }
 
@@ -90,8 +107,9 @@ early numbering
 
 define behavior for ZI_BOOKSUPPL_STR //alias <alias_name>
 implementation in class zbp_booksuppl_str_m unique
-//persistent table zbooksupp_str_m
-with unmanaged save
+persistent table zbooksupp_str_m
+draft table zbksup_d_m
+//with unmanaged save
 lock dependent by _Travel
 authorization dependent by _Travel
 etag master LastChangedAt

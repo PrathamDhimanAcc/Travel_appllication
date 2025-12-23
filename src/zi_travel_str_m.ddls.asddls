@@ -7,6 +7,7 @@
     sizeCategory: #S,
     dataClass: #MIXED
 }
+
 define root view entity ZI_TRAVEL_STR_M
   as select from ztravel_str_m
   composition [0..*] of ZI_BOOKING_STR_M         as _Booking

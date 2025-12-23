@@ -8,6 +8,8 @@ CLASS lhc_zi_booking_str_m DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys REQUEST requested_features FOR zi_booking_str_m RESULT result.
     METHODS calculatetotalprice FOR DETERMINE ON MODIFY
       IMPORTING keys FOR zi_booking_str_m~calculatetotalprice.
+    METHODS setcurrencycode FOR DETERMINE ON SAVE
+      IMPORTING keys FOR zi_booking_str_m~setCurrencyCode.
 
 ENDCLASS.
 
@@ -84,6 +86,15 @@ CLASS lhc_zi_booking_str_m IMPLEMENTATION.
              EXECUTE reCalcTotPrice
              FROM CORRESPONDING #( it_travel ).
 
+
+  ENDMETHOD.
+
+  METHOD setCurrencyCode.
+
+    READ ENTITIES OF zi_travel_str_m IN LOCAL MODE ENTITY zi_booking_str_m BY \_Travel FIELDS ( CurrencyCode )
+    WITH CORRESPONDING #( keys ) RESULT DATA(it_booking).
+
+    MODIFY ENTITIES OF zi_travel_str_m IN LOCAL MODE ENTITY zi_booking_str_m UPDATE FIELDS ( CurrencyCode ) WITH VALUE #( FOR booking IN it_booking ( %tky-TravelId = booking-%tky-TravelId  ) ).
 
   ENDMETHOD.
 

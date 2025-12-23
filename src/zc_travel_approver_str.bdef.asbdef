@@ -28,7 +28,7 @@ strict ( 2 );
 define behavior for ZC_TRAVEL_APPROVER_STR //alias <alias_name>
 use etag
 {
-  //  use create;
+  // use create;
   use update;
   //  use delete;
 

@@ -25,28 +25,38 @@ CLASS lsc_zi_travel_str_m IMPLEMENTATION.
         READ TABLE create-zi_travel_str_m ASSIGNING FIELD-SYMBOL(<ls_travel>)
                             WITH TABLE KEY entity
                             COMPONENTS TravelId = <ls_log>-travelid.
+
+        READ TABLE update-zi_travel_str_m ASSIGNING FIELD-SYMBOL(<ls_u_travel>)
+                            WITH TABLE KEY entity
+                            COMPONENTS TravelId = <ls_log>-travelid.
+        TRY.
+            <ls_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+          CATCH cx_uuid_error.
+            "handle= exception
+        ENDTRY.
         IF sy-subrc = 0.
-          IF <ls_travel>-%control-BookingFee = cl_abap_behv=>flag_changed .
-            <ls_log>-changed_field_name = 'Booking Fee'.
-            <ls_log>-changed_value = <ls_travel>-BookingFee.
-            TRY.
-                <ls_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
-              CATCH cx_uuid_error.
-                "handle= exception
-            ENDTRY.
-            APPEND <ls_log> TO lt_log_c.
-          ENDIF.
-          IF <ls_travel>-%control-OverallStatus = cl_abap_behv=>flag_changed .
-            <ls_log>-changed_field_name = 'Overall Status'.
-            <ls_log>-changed_value = <ls_travel>-OverallStatus.
-            TRY.
-                <ls_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
-              CATCH cx_uuid_error.
-                "handle exception
-            ENDTRY.
-            APPEND <ls_log> TO lt_log_c.
+          IF  <ls_u_travel> IS ASSIGNED.
+            IF <ls_u_travel>-%control-BookingFee = cl_abap_behv=>flag_changed .
+              <ls_log>-changed_field_name = 'Booking Fee'.
+              <ls_log>-changed_value = <ls_u_travel>-BookingFee.
+              TRY.
+                  <ls_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+                CATCH cx_uuid_error.
+                  "handle= exception
+              ENDTRY.
+            ENDIF.
+            IF <ls_u_travel>-%control-OverallStatus = cl_abap_behv=>flag_changed .
+              <ls_log>-changed_field_name = 'Overall Status'.
+              <ls_log>-changed_value = <ls_u_travel>-OverallStatus.
+              TRY.
+                  <ls_log>-change_id = cl_system_uuid=>create_uuid_x16_static( ).
+                CATCH cx_uuid_error.
+                  "handle exception
+              ENDTRY.
+            ENDIF.
           ENDIF.
         ENDIF.
+        APPEND <ls_log> TO lt_log_c.
 
       ENDLOOP.
 
@@ -72,42 +82,42 @@ CLASS lsc_zi_travel_str_m IMPLEMENTATION.
 **********************************************************************
 * Booking Supplement Unmanaged Save with Managed
 **********************************************************************
-    DATA: lt_book_suppl TYPE STANDARD TABLE OF zbooksupp_str_m.
-    GET TIME STAMP  FIELD DATA(lv_time).
-    IF create-zi_booksuppl_str IS NOT INITIAL.
-      lt_book_suppl = VALUE #( FOR ls_book IN create-zi_booksuppl_str
-      ( travel_id = ls_book-TravelId
-        booking_id = ls_book-BookingId
-        booking_supplement_id = ls_book-BookingSupplementId
-        currency_code = ls_book-CurrencyCode
-        price = ls_book-Price
-        supplement_id = ls_book-SupplementId
-        last_changed_at = lv_time
-      ) ).
-      INSERT zbooksupp_str_m FROM TABLE @lt_book_suppl.
-    ENDIF.
-
-    IF update-zi_booksuppl_str IS NOT INITIAL.
-      lt_book_suppl = VALUE #( FOR ls_book IN update-zi_booksuppl_str
-      ( travel_id = ls_book-TravelId
-        booking_id = ls_book-BookingId
-        booking_supplement_id = ls_book-BookingSupplementId
-        currency_code = ls_book-CurrencyCode
-        price = ls_book-Price
-        supplement_id = ls_book-SupplementId
-        last_changed_at = lv_time
-      ) ).
-      UPDATE zbooksupp_str_m FROM TABLE @lt_book_suppl.
-    ENDIF.
-
-    IF delete-zi_booksuppl_str IS NOT INITIAL.
-      lt_book_suppl = VALUE #( FOR ls_del IN delete-zi_booksuppl_str
-      ( travel_id = ls_del-TravelId
-        booking_id = ls_del-BookingId
-        booking_supplement_id = ls_del-BookingSupplementId
-      ) ).
-      DELETE zbooksupp_str_m FROM TABLE @lt_book_suppl.
-    ENDIF.
+*    DATA: lt_book_suppl TYPE STANDARD TABLE OF zbooksupp_str_m.
+*    GET TIME STAMP  FIELD DATA(lv_time).
+*    IF create-zi_booksuppl_str IS NOT INITIAL.
+*      lt_book_suppl = VALUE #( FOR ls_book IN create-zi_booksuppl_str
+*      ( travel_id = ls_book-TravelId
+*        booking_id = ls_book-BookingId
+*        booking_supplement_id = ls_book-BookingSupplementId
+*        currency_code = ls_book-CurrencyCode
+*        price = ls_book-Price
+*        supplement_id = ls_book-SupplementId
+*        last_changed_at = lv_time
+*      ) ).
+*      INSERT zbooksupp_str_m FROM TABLE @lt_book_suppl.
+*    ENDIF.
+*
+*    IF update-zi_booksuppl_str IS NOT INITIAL.
+*      lt_book_suppl = VALUE #( FOR ls_book IN update-zi_booksuppl_str
+*      ( travel_id = ls_book-TravelId
+*        booking_id = ls_book-BookingId
+*        booking_supplement_id = ls_book-BookingSupplementId
+*        currency_code = ls_book-CurrencyCode
+*        price = ls_book-Price
+*        supplement_id = ls_book-SupplementId
+*        last_changed_at = lv_time
+*      ) ).
+*      UPDATE zbooksupp_str_m FROM TABLE @lt_book_suppl.
+*    ENDIF.
+*
+*    IF delete-zi_booksuppl_str IS NOT INITIAL.
+*      lt_book_suppl = VALUE #( FOR ls_del IN delete-zi_booksuppl_str
+*      ( travel_id = ls_del-TravelId
+*        booking_id = ls_del-BookingId
+*        booking_supplement_id = ls_del-BookingSupplementId
+*      ) ).
+*      DELETE zbooksupp_str_m FROM TABLE @lt_book_suppl.
+*    ENDIF.
 
   ENDMETHOD.
 
@@ -170,7 +180,12 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
   METHOD earlynumbering_create.
 
     DATA(lt_entities) = entities.
-    DELETE lt_entities WHERE TravelId IS NOT INITIAL.
+
+    IF lines( lt_entities ) = 0.
+      RETURN.
+    ENDIF.
+
+
     TRY.
         cl_numberrange_runtime=>number_get(
           EXPORTING
@@ -190,14 +205,16 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
         LOOP AT lt_entities INTO DATA(ls_entity).
 
           APPEND VALUE #( %cid = ls_entity-%cid
+                            %is_draft = ls_entity-%is_draft
                           %key = ls_entity-%key )
                           TO failed-zi_travel_str_m.
           APPEND VALUE #( %cid = ls_entity-%cid
                           %key = ls_entity-%key
+                          %is_draft = ls_entity-%is_draft
                           %msg = lo_error )
                           TO reported-zi_travel_str_m.
         ENDLOOP.
-        EXIT.
+        RETURN.
     ENDTRY.
 
 
@@ -206,12 +223,18 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
           ls_travel_str_m LIKE LINE OF lt_travel_str_m.
     DATA(lv_curr_num) = lv_latest_num - lv_qty.
     LOOP AT lt_entities INTO DATA(ls_entities).
+      IF ls_entities-TravelId IS NOT INITIAL.
+        ls_travel_str_m =  CORRESPONDING #( ls_entities ).
+
+        APPEND ls_travel_str_m TO mapped-zi_travel_str_m.
+        CONTINUE.
+      ENDIF.
       lv_curr_num = lv_curr_num + 1.
-      APPEND VALUE #( %cid = ls_entities-%cid
-                             TravelId = lv_curr_num )
-                   TO mapped-zi_travel_str_m.
-      .
-*    APPEND ls_travel_str_m to mapped-zi_travel_str_m.
+      ls_travel_str_m = VALUE #( %cid = ls_entities-%cid
+                                   %is_draft = ls_entities-%is_draft
+                             TravelId = lv_curr_num ).
+
+      APPEND ls_travel_str_m TO mapped-zi_travel_str_m.
 
     ENDLOOP.
 
