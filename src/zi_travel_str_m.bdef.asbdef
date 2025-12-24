@@ -83,7 +83,7 @@ early numbering
   field ( mandatory : create, readonly : update ) BookingDate, CustomerId;
 
 
-  determination setCurrencyCode on save {  field CurrencyCode; }
+  determination setCurrencyCode on modify { create; field CurrencyCode;  }
 
   determination calculateTotalPrice on modify { create; field FlightPrice, CurrencyCode; }
 

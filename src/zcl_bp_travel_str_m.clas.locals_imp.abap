@@ -420,6 +420,7 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
     RESULT DATA(lt_ba_booksuppl).
 
     LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
+        <ls_travel>-TotalPrice = 0.
       lt_total = VALUE #( ( price = <ls_travel>-BookingFee curr = <ls_travel>-CurrencyCode ) ).
 
       LOOP AT lt_ba_booking ASSIGNING FIELD-SYMBOL(<ls_bookibg>)
@@ -438,21 +439,28 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
                           TO lt_total.
         ENDLOOP.
       ENDLOOP.
-
       LOOP AT lt_total ASSIGNING FIELD-SYMBOL(<ls_total>).
         IF <ls_total>-curr = <ls_travel>-CurrencyCode.
           lv_conv_price = <ls_total>-price.
         ELSE.
+          DATA(lo_conv) = NEW zcl_curr_conv( ).
+          lv_conv_price = lo_conv->convert_amount(
+              EXPORTING
+               iv_amount = <ls_total>-price
+               iv_from_curr = <ls_total>-curr
+               iv_to_curr = <ls_travel>-CurrencyCode
+               iv_date = cl_abap_context_info=>get_system_date(  )
+            ).
 
-          /dmo/cl_flight_amdp=>convert_currency(
-            EXPORTING
-              iv_amount               = <ls_total>-price
-              iv_currency_code_source = <ls_total>-curr
-              iv_currency_code_target = <ls_travel>-CurrencyCode
-              iv_exchange_rate_date   = cl_abap_context_info=>get_system_date(  )
-            IMPORTING
-              ev_amount               = lv_conv_price
-          ).
+*          /dmo/cl_flight_amdp=>convert_currency(
+*            EXPORTING
+*              iv_amount               = <ls_total>-price
+*              iv_currency_code_source = <ls_total>-curr
+*              iv_currency_code_target = <ls_travel>-CurrencyCode
+*              iv_exchange_rate_date   = cl_abap_context_info=>get_system_date(  )
+*            IMPORTING
+*              ev_amount               = lv_conv_price
+*          ).
         ENDIF.
         <ls_travel>-TotalPrice = <ls_travel>-TotalPrice + lv_conv_price.
       ENDLOOP.
