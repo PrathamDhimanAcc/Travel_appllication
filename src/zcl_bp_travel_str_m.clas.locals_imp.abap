@@ -162,6 +162,8 @@ CLASS lhc_ZI_TRAVEL_STR_M DEFINITION INHERITING FROM cl_abap_behavior_handler.
       IMPORTING keys FOR zi_travel_str_m~calculatetotalprice.
     METHODS precheck_update FOR PRECHECK
       IMPORTING entities FOR UPDATE zi_travel_str_m.
+    METHODS deductdiscount FOR MODIFY
+      IMPORTING keys FOR ACTION zi_travel_str_m~deductDiscount RESULT result.
 
     METHODS earlynumbering_cba_booking FOR NUMBERING
       IMPORTING entities FOR CREATE zi_travel_str_m\_booking.
@@ -198,40 +200,40 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
         READ TABLE lt_age_ctry  ASSIGNING FIELD-SYMBOL(<ls_age_ctry>)
             WITH KEY travel_id = ls_travels-TravelId.
         IF <ls_age_ctry> IS NOT ASSIGNED.
-            lv_update = if_abap_behv=>auth-allowed.
-            lv_delete = if_abap_behv=>auth-allowed.
-            APPEND VALUE #( %tky = ls_travels-%tky
-                            %update = lv_update
-                            %delete = lv_delete ) to result.
-            CONTINUE.
+          lv_update = if_abap_behv=>auth-allowed.
+          lv_delete = if_abap_behv=>auth-allowed.
+          APPEND VALUE #( %tky = ls_travels-%tky
+                          %update = lv_update
+                          %delete = lv_delete ) TO result.
+          CONTINUE.
         ENDIF.
         IF requested_authorizations-%update = if_abap_behv=>mk-on.
           AUTHORITY-CHECK OBJECT '/DMO/TRVL'
               ID '/DMO/CNTRY' FIELD <ls_age_ctry>-country_code
               ID 'ACTVT' FIELD '02'.
-           lv_update = COND #( WHEN sy-subrc = 0 THEN if_abap_behv=>auth-allowed
-                                                   ELSE if_abap_behv=>auth-unauthorized ).
-            APPEND VALUE #( %tky = ls_travels-%tky
-                            %msg = NEW /dmo/cm_flight_messages(
-                                textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
-                                agency_id = ls_travels-AgencyId
-                                severity = if_abap_behv_message=>severity-error )
-                               %element-AgencyID = if_abap_behv=>mk-on
-                             ) TO reported-zi_travel_str_m.
+          lv_update = COND #( WHEN sy-subrc = 0 THEN if_abap_behv=>auth-allowed
+                                                  ELSE if_abap_behv=>auth-unauthorized ).
+          APPEND VALUE #( %tky = ls_travels-%tky
+                          %msg = NEW /dmo/cm_flight_messages(
+                              textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
+                              agency_id = ls_travels-AgencyId
+                              severity = if_abap_behv_message=>severity-error )
+                             %element-AgencyID = if_abap_behv=>mk-on
+                           ) TO reported-zi_travel_str_m.
 
         ENDIF.
         IF requested_authorizations-%delete = if_abap_behv=>mk-on.
-            AUTHORITY-CHECK OBJECT '/DMO/TRVL'
-              ID '/DMO/CNTRY' FIELD <ls_age_ctry>-country_code
-              ID 'ACTVT' FIELD '06'.
-            lv_delete = COND #( WHEN sy-subrc = 0 THEN IF_abap_behv=>auth-allowed ELSE if_abap_behv=>auth-unauthorized ).
-            APPEND VALUE #( %tky = ls_travels-%tky
-                            %msg = NEW /dmo/cm_flight_messages(
-                                textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
-                                agency_id = ls_travels-AgencyId
-                                severity = if_abap_behv_message=>severity-error )
-                               %element-AgencyID = if_abap_behv=>mk-on
-                             ) TO reported-zi_travel_str_m.
+          AUTHORITY-CHECK OBJECT '/DMO/TRVL'
+            ID '/DMO/CNTRY' FIELD <ls_age_ctry>-country_code
+            ID 'ACTVT' FIELD '06'.
+          lv_delete = COND #( WHEN sy-subrc = 0 THEN IF_abap_behv=>auth-allowed ELSE if_abap_behv=>auth-unauthorized ).
+          APPEND VALUE #( %tky = ls_travels-%tky
+                          %msg = NEW /dmo/cm_flight_messages(
+                              textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
+                              agency_id = ls_travels-AgencyId
+                              severity = if_abap_behv_message=>severity-error )
+                             %element-AgencyID = if_abap_behv=>mk-on
+                           ) TO reported-zi_travel_str_m.
         ENDIF.
       ENDLOOP.
     ENDIF.
@@ -740,25 +742,83 @@ CLASS lhc_ZI_TRAVEL_STR_M IMPLEMENTATION.
         WHERE agency_id = @lt_agency-agency_id
         INTO TABLE @DATA(lt_ag_ct).
 
-    LOOP at entities INTO DATA(ls_entities).
-        READ TABLE lt_ag_ct ASSIGNING FIELD-SYMBOL(<ls_ag_ct>)
-                        WITH KEY agency_id = ls_entities-AgencyId .
-        AUTHORITY-CHECK OBJECT '/DMO/TRVL'
-            ID '/DMO/CNTRY' FIELD <ls_ag_ct>-country_code
-            ID 'ACTVT' FIELD '02'.
+    LOOP AT entities INTO DATA(ls_entities).
+      READ TABLE lt_ag_ct ASSIGNING FIELD-SYMBOL(<ls_ag_ct>)
+                      WITH KEY agency_id = ls_entities-AgencyId .
+      AUTHORITY-CHECK OBJECT '/DMO/TRVL'
+          ID '/DMO/CNTRY' FIELD <ls_ag_ct>-country_code
+          ID 'ACTVT' FIELD '02'.
 
-            IF sy-subrc IS NOT INITIAL.
+      IF sy-subrc IS NOT INITIAL.
 
-            failed-zi_travel_str_m = VALUE #( ( %tky = ls_entities-%tky ) ).
-            APPEND VALUE #( %tky = ls_entities-%tky
-                            %msg = NEW /dmo/cm_flight_messages(
-                                textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
-                                agency_id = ls_entities-AgencyId
-                                severity = if_abap_behv_message=>severity-error )
-                               %element-AgencyID = if_abap_behv=>mk-on
-                             ) TO reported-zi_travel_str_m.
-            ENDIF.
+        failed-zi_travel_str_m = VALUE #( ( %tky = ls_entities-%tky ) ).
+        APPEND VALUE #( %tky = ls_entities-%tky
+                        %msg = NEW /dmo/cm_flight_messages(
+                            textid = /dmo/cm_flight_messages=>not_authorized_for_agencyid
+                            agency_id = ls_entities-AgencyId
+                            severity = if_abap_behv_message=>severity-error )
+                           %element-AgencyID = if_abap_behv=>mk-on
+                         ) TO reported-zi_travel_str_m.
+      ENDIF.
     ENDLOOP.
+
+  ENDMETHOD.
+
+  METHOD deductDiscount.
+    DATA(lv_keys) = keys.
+    LOOP AT lv_keys INTO DATA(wa_keys) WHERE %param-discount IS INITIAL
+                                              OR %param-discount GT 100
+                                              OR %param-discount LT 0.
+*            failed-zi_travel_str_m = VALUE #( ( %tky = wa_keys-%tky ) ).
+      APPEND VALUE #(  %tky = wa_keys-%tky ) TO failed-zi_travel_str_m.
+
+      APPEND VALUE #(
+           %tky = wa_keys-%tky
+         %msg = NEW /dmo/cm_flight_messages(
+              textid = /dmo/cm_flight_messages=>discount_invalid
+              severity = if_abap_behv_message=>severity-error
+          )
+          %element-bookingfee = if_abap_behv=>mk-on
+          %action-deductDiscount = if_abap_behv=>mk-on
+               ) TO reported-zi_travel_str_m.
+        DELETE lv_keys.
+
+    ENDLOOP.
+
+    CHECK lv_keys IS NOT INITIAL.
+
+    READ ENTITIES OF ZI_TRAVEL_STR_M
+        IN LOCAL MODE ENTITY zi_travel_str_m
+        FIELDS ( BookingFee ) WITH CORRESPONDING #( lv_keys )
+        RESULT DATA(lt_travel).
+
+    DATA m_z_travel TYPE TABLE FOR UPDATE zi_travel_str_m.
+    LOOP AT lt_travel ASSIGNING FIELD-SYMBOL(<ls_travel>).
+
+        DATA lv_disc TYPE decfloat16.
+        DATA(lv_discount) = lv_keys[ KEY ID %tky = <ls_travel>-%tky ]-%param-discount.
+
+        lv_disc = lv_discount / 100.
+
+        DATA(booking_fee_after_discount) = <ls_travel>-BookingFee - ( <ls_travel>-BookingFee * lv_disc ).
+
+
+        APPEND VALUE #( %tky = <ls_travel>-%tky
+                        BookingFee = booking_fee_after_discount ) TO m_z_travel.
+
+    ENDLOOP.
+
+    MODIFY ENTITIES OF zi_travel_str_m
+    IN LOCAL MODE ENTITY zi_travel_str_m
+    UPDATE FIELDS ( BookingFee ) WITH m_z_travel.
+
+    READ enTITIES OF zi_travel_str_m
+    IN LOCAL MODE ENTITY zi_travel_str_m
+    ALL FIELDS WITH CORRESPONDING #( lv_keys )
+    RESULT DATA(modified_travel).
+
+    result = VALUE #( for lw_modified_travel in modified_travel ( %tky = lw_modified_travel-%tky
+                                                                %param = lw_modified_travel ) ).
 
   ENDMETHOD.
 

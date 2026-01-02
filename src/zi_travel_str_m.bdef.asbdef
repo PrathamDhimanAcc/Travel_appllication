@@ -19,7 +19,7 @@ early numbering
   action ( features : instance ) acceptTravel result [1] $self;
   action ( features : instance ) rejectTravel result [1] $self;
 
-//  action ( authorization : global) deductDiscount parameter
+  action ( authorization : global) deductDiscount parameter ZA_DECT_DIS result [1] $self;
 
   factory action copyTravel [1];
 

@@ -10,6 +10,7 @@ use etag
   use delete;
 
   use action Edit;
+  use action deductDiscount;
   use action Activate;
   use action Discard;
   use action Prepare;

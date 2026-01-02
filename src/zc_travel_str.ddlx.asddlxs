@@ -20,7 +20,9 @@ annotate view ZC_TRAVEL_STR with
                 type: #LINEITEM_REFERENCE,
                 targetElement: '_Booking' }]
   @UI: { lineItem: [{ position: 10 },
-                    { type: #FOR_ACTION, dataAction: 'copyTravel', label: 'Copy Travel' }],
+                    { type: #FOR_ACTION, dataAction: 'copyTravel', label: 'Copy Travel' },
+                    { type: #FOR_ACTION, dataAction: 'deductDiscount', label: 'Deduct Discount' }],
+  
 
      selectionField: [{ position: 10 }],
      identification: [{ position: 10 }]}
